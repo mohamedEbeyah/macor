@@ -1,5 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+/**
+ * Represents a single item in the cart.
+ */
 interface CartItem {
   id: number;
   title: string;
@@ -8,10 +11,14 @@ interface CartItem {
   quantity: number;
 }
 
+/**
+ * Cart state structure.
+ */
 interface CartState {
   items: CartItem[];
 }
 
+// ✅ Clean and minimal initial state definition.
 const initialState: CartState = {
   items: [],
 };
@@ -19,8 +26,11 @@ const initialState: CartState = {
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
-  
+
   reducers: {
+    /**
+     * ✅ Good logic: Checks if the item already exists in cart.
+     */
     addToCart(state, action: PayloadAction<CartItem>) {
       const existingItem = state.items.find(item => item.id === action.payload.id);
       if (existingItem) {
@@ -29,12 +39,16 @@ const cartSlice = createSlice({
         state.items.push({ ...action.payload, quantity: 1 });
       }
     },
+
+    /**
+     * ✅ Clean filtering logic to remove an item by ID.
+     */
     removeFromCart(state, action: PayloadAction<number>) {
-    state.items = state.items.filter(item => item.id !== action.payload);
-  },
+      state.items = state.items.filter(item => item.id !== action.payload);
+    },
   },
 });
 
-export const { addToCart , removeFromCart } = cartSlice.actions;
-
+// ✅ Good export structure
+export const { addToCart, removeFromCart } = cartSlice.actions;
 export default cartSlice.reducer;

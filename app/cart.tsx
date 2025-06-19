@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
 import { Button, FlatList, Image, StyleSheet, Text, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeFromCart } from "../store/features/cartSlice";
 import { RootState } from '../store/store';
+// Use absolute path import for better refactoring 
 
 export default function CartScreen() {
   const cartItems = useSelector((state: RootState) => state.cart.items);
