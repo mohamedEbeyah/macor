@@ -1,17 +1,44 @@
-import { configureStore } from '@reduxjs/toolkit';
-import cartReducer from './features/cartSlice';
-import productsReducer from './features/productsSlice';
+// store.ts
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { combineReducers, configureStore } from '@reduxjs/toolkit'
+import {
+  FLUSH,
+  PAUSE,
+  PERSIST,
+  persistReducer,
+  persistStore,
+  PURGE,
+  REGISTER,
+  REHYDRATE,
+} from 'redux-persist'
 
-// ✅ Good: Clean and modular store configuration
+import { api } from './features/api'
+import cartReducer from './features/cartSlice'
+
+const rootReducer = combineReducers({
+  cart: cartReducer,
+  [api.reducerPath]: api.reducer,
+})
+
+const persistConfig = {
+  key: 'root',
+  storage: AsyncStorage,
+  // whitelist removed to persist entire Redux state
+}
+
+const persistedReducer = persistReducer(persistConfig, rootReducer)
+
 export const store = configureStore({
-  reducer: {
-    products: productsReducer,
-    cart: cartReducer,
-  },
-  // ⚠️ Suggestion: If you're building an app where cart or product state
-  // should survive a full reload , or you want to save connected user token ,, ect
-  // consider integrating redux-persist here to persist that state to localStorage/AsyncStorage.
-});
+  reducer: persistedReducer,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }).concat(api.middleware),
+})
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export const persistor = persistStore(store)
+
+export type RootState = ReturnType<typeof store.getState>
+export type AppDispatch = typeof store.dispatch
