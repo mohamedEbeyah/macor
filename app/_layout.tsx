@@ -1,7 +1,6 @@
 import { ApolloProvider } from '@apollo/client';
-import "babel.config.js";
+
 import { Slot } from 'expo-router';
-import React from 'react';
 import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
