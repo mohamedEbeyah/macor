@@ -4,11 +4,12 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
  * Represents a single item in the cart.
  */
 interface CartItem {
-  id: number;
-  title: string;
+  id: number ;
+  name: string;
   price: number;
-  image: string;
+  thumbnail: string;
   quantity: number;
+  
 }
 
 /**

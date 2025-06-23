@@ -23,9 +23,10 @@ export const fetchProducts = createAsyncThunk<Product[]>(
 // ✅ Well-defined type for Product
 interface Product {
   id: number;
-  title: string;
+  name: string;
   price: number;
-  image: string;
+  thumbnail: string;
+  quantity: number
 }
 
 // ✅ Clean and simple product state interface

@@ -1,6 +1,6 @@
 // store.ts
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { combineReducers, configureStore } from '@reduxjs/toolkit'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import {
   FLUSH,
   PAUSE,
@@ -10,14 +10,13 @@ import {
   PURGE,
   REGISTER,
   REHYDRATE,
-} from 'redux-persist'
-
-import { api } from './features/api'
-import cartReducer from './features/cartSlice'
+} from 'redux-persist';
+import cartReducer from './features/cartSlice';
+import languageReducer from './features/langSlice';
 
 const rootReducer = combineReducers({
   cart: cartReducer,
-  [api.reducerPath]: api.reducer,
+  language: languageReducer,
 })
 
 const persistConfig = {
@@ -35,7 +34,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }).concat(api.middleware),
+    })
 })
 
 export const persistor = persistStore(store)

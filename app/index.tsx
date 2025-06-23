@@ -1,114 +1,122 @@
-// app/index.tsx
-import { Link } from 'expo-router'
-import React from 'react'
+import { gql, useQuery } from '@apollo/client';
+import * as Localization from 'expo-localization';
+import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
-    Button,
-    FlatList,
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native'
-import { useDispatch } from 'react-redux'
-import { useGetProductsQuery } from '../store/features/api'
-import { addToCart } from '../store/features/cartSlice'
+  Button,
+  FlatList,
+  Image,
+  Pressable,
+  Text,
+  View
+} from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { RootState } from '@/store/store';
+import { addToCart } from '../store/features/cartSlice';
+import { setLanguage } from '../store/features/langSlice';
+
+const GET_PRODUCTS = gql`
+  query GetProducts {
+    products(first: 10) {
+      edges {
+        node {
+          id
+          name
+          thumbnail {
+            url
+          }
+          pricing {
+            priceRange {
+              start {
+                gross {
+                  amount
+                  currency
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 export default function HomeScreen() {
-  const { data: products, isLoading, isError } = useGetProductsQuery()
-  const dispatch = useDispatch()
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { t } = useTranslation();
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#333" />
-      </View>
-    )
-  }
+  const { data, loading, error } = useQuery(GET_PRODUCTS);
 
-  if (isError) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Error loading products. Please try again.</Text>
-      </View>
-    )
-  }
+  // Always call hooks outside of any conditions
+  useEffect(() => {
+    const locale = Localization.locale.split('-')[0]; // e.g. "en-US" -> "en"
+    dispatch(setLanguage(locale));
+  }, []);
+
+  const products = data?.products?.edges.map((edge: { node: any; }) => edge.node) || [];
+  const currentLang = useSelector((state: RootState) => state.language.language);
+  const handleAddToCart = (product: {
+    id: number;
+    name: string;
+    thumbnail: string;
+    price: number;
+  }) => {
+    dispatch(addToCart({ ...product, quantity: 1 }));
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={products}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.image} resizeMode="contain" />
-            <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-            <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-            <Button title="Add to Cart" onPress={() => dispatch(addToCart(item))} />
-          </View>
-        )}
-      />
+    <View className="flex-1 bg-white p-4">
+      {loading && <Text>{t('loading') || 'Loading...'}</Text>}
+      {error && <Text>{t('error') || 'Error loading products'}</Text>}
 
-      <View style={styles.cartButtonContainer}>
-        <Link href="/cart" asChild>
-          <Button title="Go to Cart" />
-        </Link>
-      </View>
-    </SafeAreaView>
-  )
+      {!loading && !error && (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => {
+            const price = item.pricing?.priceRange?.start?.gross?.amount ?? 0;
+            return (
+              
+              <View className="mb-4 bg-white p-3 rounded-lg shadow">
+                <Image source={{ uri: item.thumbnail?.url }} className="w-20 h-20" resizeMode="contain" />
+                <Text className="font-bold text-black">{item.name}</Text>
+                <Text className="text-black mb-2">${price.toFixed(2)}</Text>
+                <Pressable
+                  className="bg-blue-600 rounded-lg py-2"
+                  onPress={() =>
+                    handleAddToCart({
+                      id: item.id,
+                      name: item.name,
+                      thumbnail: item.thumbnail?.url ?? '',
+                      price,
+                    })
+                  }
+                />
+                <Text className="text-white text-center font-semibold">
+  Current Language: {currentLang.toUpperCase()}
+</Text>
+
+
+              </View>
+              
+            );
+          }}
+        />
+      )}
+<Text className="mt-4">
+  Current Language: {currentLang.toUpperCase()}
+</Text><View className="mb-4 bg-white p-3 rounded-lg shadow">
+  <Button title="EN" onPress={() => dispatch(setLanguage('en'))} />
+  <Button title="FR" onPress={() => dispatch(setLanguage('fr'))} />
+  <Button title="AR" onPress={() => dispatch(setLanguage('ar'))} />
+</View>
+      <Button title={t('goToCart') || 'Go to Cart'} onPress={() => router.push('/cart')} />
+    </View>
+    
+  );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fafafa',
-    paddingHorizontal: 16,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 16,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  image: {
-    width: '100%',
-    height: 150,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-    color: '#333',
-  },
-  price: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#007AFF',
-  },
-  cartButtonContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-  },
-})
+
